@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Details</title>
+    <link rel="stylesheet" href="./src/css/output.css" />
+  </head>
+  <body>
+    <div id="navbar" class="fixed top-0 w-full z-10"></div>
+
+    <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-lg shadow-md my-20">
+      <h2 class="text-3xl font-bold mb-4 text-center text-blue-400">
+        Order Details
+      </h2>
+      <div id="orderDetails" class="space-y-4"></div>
+      <div class="mt-4 text-right text-lg font-semibold">
+        <span>Total: </span>
+        <span id="orderTotal" class="text-green-400"></span>
+      </div>
+      <a
+        href="CustomerOrder.html"
+        class="mt-6 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+      >
+        Back to CustomerOrders
+      </a>
+    </div>
+
+    <script src="./src/js/jquery-3.7.1.min.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script defer src="./src/js/order-details.js"></script>
+  </body>
+</html>
