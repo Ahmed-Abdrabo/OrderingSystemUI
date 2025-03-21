@@ -46,6 +46,88 @@ const loadProducts = () => {
     });
 };
 
+ // Fetch & Render Orders
+ const fetchOrders =()=> {
+    $.ajax({
+        url: `${API_URL}/orders/GetOrderForCustomer`,
+        method: "GET",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        success: function (orders) {
+            renderOrders(orders);
+        },
+        error: function () {
+            ordersList.html('<tr><td colspan="4" class="text-center text-red-500">Failed to load orders</td></tr>');
+        },
+    });
+}
+
+const renderOrders = (orders) => {
+    ordersList.empty(); // Clear table before appending new data
+
+    if (orders.length === 0) {
+        ordersList.append('<tr><td colspan="4" class="text-center text-gray-500">No orders found</td></tr>');
+        return;
+    }
+
+    orders.forEach((order) => {
+        let firstProduct = true; // Flag for rowspan
+  
+        order.orderItems.forEach((item, index) => {
+          let orderRow = `
+            <tr class="odd:bg-gray-800 even:bg-gray-800 border">
+              ${index === 0 ? `
+              <!-- Order ID -->
+              <td class="px-6 py-4 font-medium text-gray-100 text-center align-middle border" rowspan="${order.orderItems.length}">
+                <span>${order.id}</span>
+              </td>
+  
+        
+  
+              <!-- Order Date -->
+              <td class="px-6 py-4 text-gray-300 text-center align-middle border" rowspan="${order.orderItems.length}">
+                <span>${new Date(order.orderDate).toLocaleString()}</span>
+              </td>
+  
+              <!-- Order Status -->
+              <td class="px-6 py-4 text-center align-middle border border-white" rowspan="${order.orderItems.length}">
+                <span class="px-3 py-1 rounded-full text-sm font-medium ${order.status === 'Pending' ? 'bg-yellow-300 text-gray-800' : 'bg-green-400 text-white'}">
+                  ${order.status}
+                </span>
+              </td>
+              ` : ''}
+  
+              <!-- Product Name -->
+              <td class="px-6 py-4 text-gray-300 border">
+                <span>${item.productName}</span>
+              </td>
+  
+              <!-- Quantity -->
+              <td class="px-6 py-4 text-gray-300 border border-white">
+                <span>${item.quantity}</span>
+              </td>
+  
+              ${firstProduct ? `
+              <!-- Action Buttons -->
+              <td class="px-6 py-4 text-center align-middle border border-white" rowspan="${order.orderItems.length}">
+                <div class="flex items-center justify-center gap-2">
+                  <button class="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer font-medium px-4 py-2 rounded-lg shadow-md get-order"
+                          data-id="${order.id}">
+                    Get
+                  </button>
+                  <button class="bg-red-600 hover:bg-red-700 text-white cursor-pointer font-medium px-4 py-2 rounded-lg shadow-md delete-order"
+                          data-id="${order.id}">
+                    Delete
+                  </button>
+                </div>
+              </td>
+              ` : ''}
+            </tr>`;
+  
+          ordersList.append(orderRow);
+          firstProduct = false;
+        });
+      });
+}
 // Store selected products
 let selectedProducts = [];
 let totalPrice = 0;
@@ -167,6 +249,10 @@ $("#createOrderForm").submit(function (e) {
             $("#selectedProducts").empty();
             $("#quantity").val(''); // Reset quantity input
             
+            // Reset total price value and hide the span
+            totalPrice = 0;
+        $("#totalPrice").text(`Total: $0.00`).hide();
+
             // Refresh data
             fetchOrders();  // Reload orders list
             loadProducts(); // Reload products (to update stock)
@@ -189,88 +275,9 @@ $(document).on("click", ".get-order", function () {
 $(document).ready(function () {
     const ordersList = $("#ordersList");
 
-    // Fetch & Render Orders
-    function fetchOrders() {
-        $.ajax({
-            url: `${API_URL}/orders/GetOrderForCustomer`,
-            method: "GET",
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            success: function (orders) {
-                renderOrders(orders);
-            },
-            error: function () {
-                ordersList.html('<tr><td colspan="4" class="text-center text-red-500">Failed to load orders</td></tr>');
-            },
-        });
-    }
+   
 
-    function renderOrders(orders) {
-        ordersList.empty(); // Clear table before appending new data
-
-        if (orders.length === 0) {
-            ordersList.append('<tr><td colspan="4" class="text-center text-gray-500">No orders found</td></tr>');
-            return;
-        }
-
-        orders.forEach((order) => {
-            let firstProduct = true; // Flag for rowspan
-      
-            order.orderItems.forEach((item, index) => {
-              let orderRow = `
-                <tr class="odd:bg-gray-800 even:bg-gray-800 border">
-                  ${index === 0 ? `
-                  <!-- Order ID -->
-                  <td class="px-6 py-4 font-medium text-gray-100 text-center align-middle border" rowspan="${order.orderItems.length}">
-                    <span>${order.id}</span>
-                  </td>
-      
-            
-      
-                  <!-- Order Date -->
-                  <td class="px-6 py-4 text-gray-300 text-center align-middle border" rowspan="${order.orderItems.length}">
-                    <span>${new Date(order.orderDate).toLocaleString()}</span>
-                  </td>
-      
-                  <!-- Order Status -->
-                  <td class="px-6 py-4 text-center align-middle border border-white" rowspan="${order.orderItems.length}">
-                    <span class="px-3 py-1 rounded-full text-sm font-medium ${order.status === 'Pending' ? 'bg-yellow-300 text-gray-800' : 'bg-green-400 text-white'}">
-                      ${order.status}
-                    </span>
-                  </td>
-                  ` : ''}
-      
-                  <!-- Product Name -->
-                  <td class="px-6 py-4 text-gray-300 border">
-                    <span>${item.productName}</span>
-                  </td>
-      
-                  <!-- Quantity -->
-                  <td class="px-6 py-4 text-gray-300 border border-white">
-                    <span>${item.quantity}</span>
-                  </td>
-      
-                  ${firstProduct ? `
-                  <!-- Action Buttons -->
-                  <td class="px-6 py-4 text-center align-middle border border-white" rowspan="${order.orderItems.length}">
-                    <div class="flex items-center justify-center gap-2">
-                      <button class="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer font-medium px-4 py-2 rounded-lg shadow-md get-order"
-                              data-id="${order.id}">
-                        Get
-                      </button>
-                      <button class="bg-red-600 hover:bg-red-700 text-white cursor-pointer font-medium px-4 py-2 rounded-lg shadow-md delete-order"
-                              data-id="${order.id}">
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                  ` : ''}
-                </tr>`;
-      
-              ordersList.append(orderRow);
-              firstProduct = false;
-            });
-          });
-    }
+   
 
     // Delete Order Handler
     ordersList.on("click", ".delete-order", function () {
@@ -285,6 +292,7 @@ $(document).ready(function () {
             success: function () {
                 alert("Order canceled successfully.");
                 fetchOrders(); // Refresh orders after deletion
+                loadProducts();
             },
             error: function () {
                 alert("Failed to cancel order.");
