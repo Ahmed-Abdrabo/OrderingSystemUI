@@ -1,4 +1,5 @@
 const API_URL = "https://orderingsystemserver.runasp.net/api"; // Backend API URL
+// const API_URL = "https://localhost:7018/api"; // Backend API URL
 
 document.addEventListener("DOMContentLoaded", function () {
   const token = localStorage.getItem("token");
@@ -83,12 +84,19 @@ $("#login").submit(function (e) {
         }
       },
       error: function (xhr) {
-        let errorText = "An error occurred. Please try again.";
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorText = xhr.responseJSON.message;
-        }
-        errorMessage.text(errorText).removeClass("hidden");
         submitBtn.removeAttr("disabled").text("Sign In");
+        let errorText = "An error occurred. Please try again.";
+
+        if (xhr.responseJSON) {
+          if (xhr.responseJSON.errors && Array.isArray(xhr.responseJSON.errors)) {
+            // Display validation errors
+            errorText = xhr.responseJSON.errors.join("<br>");
+          } else if (xhr.responseJSON.message) {
+            errorText = xhr.responseJSON.message;
+          }
+        }
+
+        errorMessage.html(errorText).removeClass("hidden");
       }
     });
   }
@@ -175,14 +183,26 @@ $("#register").submit(function (e) {
               localStorage.setItem("token", response.token);
               localStorage.setItem("userEmail", response.email);
               localStorage.setItem("displayName", response.displayName);
+              localStorage.setItem("userRole", response.role); // Example: "admin" or "user"
 
               window.location.href = "CustomerOrder.html"; // Redirect on success
               } else {
                   errorMessage.text(response.message).removeClass("hidden");
               }
           },
-          error: function () {
-              errorMessage.text("An error occurred. Please try again.").removeClass("hidden");
+          error: function (xhr) {
+            let errorText = "An error occurred. Please try again.";
+        
+            if (xhr.responseJSON) {
+              if (xhr.responseJSON.errors && Array.isArray(xhr.responseJSON.errors)) {
+                // Display validation errors as a list
+                errorText = xhr.responseJSON.errors.join("<br>");
+              } else if (xhr.responseJSON.message) {
+                errorText = xhr.responseJSON.message;
+              }
+            }
+        
+            errorMessage.html(errorText).removeClass("hidden");
           },
           complete: function () {
               submitBtn.removeAttr("disabled").html("Register");
