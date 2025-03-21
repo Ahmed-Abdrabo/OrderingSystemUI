@@ -10,6 +10,7 @@ if (!token) {
 
 // Store product stock data
 let productStockMap = {};
+const productPrices = {}; 
 
 
 // Load products into dropdown
@@ -28,7 +29,8 @@ const loadProducts = () => {
             }
 
             products.forEach((product) => {
-                productStockMap[product.id] = product.stock;  
+                productStockMap[product.id] = product.stock; 
+                productPrices[product.id] = product.price; 
                 if (product.stock > 0) {
                 productSelect.append(
                     `<option value="${product.id}" class="bg-white-900 text-gray-500">
@@ -46,13 +48,23 @@ const loadProducts = () => {
 
 // Store selected products
 let selectedProducts = [];
+let totalPrice = 0;
 
+// Function to update the total price display
+function updateTotalPrice() {
+    if (totalPrice < 0.01) {
+        $("#totalPrice").hide(); // Hide when total price is 0
+    } else {
+        $("#totalPrice").text(`Total: $${totalPrice.toFixed(2)}`).show(); // Show when total price > 0
+    }
+}
 // Add product to the order list
 $("#addProduct").click(function () {
      const productId = $("#product").val();
-    const productName = $("#product option:selected").text().trim().split(/\s|-/)[0];
+    const productName = $("#product option:selected").text().trim().split("-")[0];
     const quantity = parseInt($("#quantity").val());
     const availableStock = productStockMap[productId] || 0; // Get stock from map
+    const productPrice = productPrices[productId] || 0;
 
     if (!productId || isNaN(quantity) || quantity <= 0) {
         alert("Please select a valid product and quantity.");
@@ -79,6 +91,9 @@ $("#addProduct").click(function () {
 
        // Update UI
        $(`#selectedProducts li[data-id="${productId}"] span`).text(`${productName} - Quantity: ${newQuantity}`);
+
+       totalPrice += productPrice * quantity;
+
    } else {
        // Add new product
        selectedProducts.push({ productId: parseInt(productId), quantity });
@@ -90,14 +105,41 @@ $("#addProduct").click(function () {
                <button class="text-red-500 remove-product cursor-pointer" data-id="${productId}">Remove</button>
            </li>
        `);
+
+       // Add product price to total
+       totalPrice += productPrice * quantity;
    }
+   updateTotalPrice();
+
 });
+
+// Add total price span in your HTML if not already present
+// Add total price span in your HTML if not already present
+if ($("#totalPrice").length === 0) {
+    $("#selectedProducts").after(`
+        <div class="flex justify-end mt-3">
+            <span id="totalPrice" 
+                class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-300 text-gray-800 border-2 border-yellow-500 shadow-lg hidden">
+                Total: $0.00
+            </span>
+        </div>
+    `);
+}
 
 // Remove product from the list
 $("#selectedProducts").on("click", ".remove-product", function () {
     const productId = $(this).data("id");
-    selectedProducts = selectedProducts.filter(item => item.productId !== productId);
-    $(this).parent().remove();
+    const product = selectedProducts.find(item => item.productId == productId);
+    const productPrice = productPrices[productId] || 0;
+
+    if (product) {
+        totalPrice -= product.quantity * productPrice; // Subtract from total
+        selectedProducts = selectedProducts.filter(item => item.productId !== productId);
+        $(this).parent().remove();
+        console.log(totalPrice);
+        
+        updateTotalPrice();
+    }
 });
 
 // Handle Order Submission
